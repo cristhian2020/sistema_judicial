@@ -1,0 +1,240 @@
+'use client';
+import { useState, FormEvent } from 'react';
+import { addDoc, collection, updateDoc, doc, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { ProcesoExtraordinario } from '@/src/app/types';
+
+interface ProcesoFormProps {
+  proceso?: ProcesoExtraordinario;
+  onSubmit: (proceso?: ProcesoExtraordinario) => void;
+  onCancel: () => void;
+  isEdit?: boolean;
+  collectionName?: string;
+}
+
+const ESTADOS_PROCESO = [
+  'SENTENCIA',
+  'CONCILIACION',
+  'DESISTIMIENTO',
+  'RETIRO DE LA DEMANDA',
+  'EXTINCION POR INACTIVIDAD',
+  'RECHAZADAS',
+  'POR NO PRESENTADADAS',
+  'EXCUSA',
+  'REFUSA',
+  'DECLINACION',
+  'OTROS'
+];
+
+const TIPOS_PROCESO = [
+  'NEGACION DE PATERNIDAD',
+  'ASISTENCIA FAMILIAR',
+  'DIVORCIO',
+  'DECLARACION JUDICIAL DE FILIACION',
+  'INPUJNACION DE FILIACION',
+  'NEGACION DE MATERNIDAD',
+  'COMPROBACION DE MATRIMONIO',
+  'OPOCICION AL MATRIMONIO',
+  'DECLARACION DE INTERDICCION',
+  'CESACION DE INTERDICCION',
+  'SUSPENCION',
+  'GUARDA',
+];
+
+export default function ProcesoForm({
+  proceso,
+  onSubmit,
+  onCancel,
+  isEdit = false,
+}: ProcesoFormProps) {
+  const [nurej, setNurej] = useState(proceso?.nurej || '');
+  const [demandados, setDemandados] = useState(proceso?.demandados || '');
+  const [demandantes, setDemandantes] = useState(proceso?.demandantes || '');
+  const [fecha_ingreso, setFecha_ingreso] = useState(
+    proceso?.fecha_ingreso
+      ? new Date(proceso.fecha_ingreso).toISOString().split('T')[0]
+      : ''
+  );
+  const [estado_proceso, setEstado_proceso] = useState(
+    proceso?.estado_proceso || 'SENTENCIA'
+  );
+  const [observacion, setObservacion] = useState(proceso?.observacion || '');
+  const [tipoProceso, setTipoProceso] = useState(
+    proceso?.proceso || 'ASISTENCIA_FAMILIAR'
+  );
+  const [fojas, setFojas] = useState(proceso?.fojas || 0);
+  const [cuerpos, setCuerpos] = useState(proceso?.cuerpos || 0);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const procesoData = {
+        nurej,
+        demandados,
+        demandantes,
+        fecha_ingreso: fecha_ingreso ? new Date(fecha_ingreso) : new Date(),
+        estado_proceso: estado_proceso as any,
+        observacion,
+        proceso: tipoProceso as any,
+        fojas: Number(fojas),
+        cuerpos: Number(cuerpos),
+      };
+
+      if (isEdit && proceso?.id) {
+        await updateDoc(doc(db, 'extraordinario', proceso.id), procesoData);
+      } else {
+        await addDoc(collection(db, 'extraordinario'), procesoData);
+      }
+
+      onSubmit(procesoData as ProcesoExtraordinario);
+      setNurej('');
+      setDemandados('');
+      setDemandantes('');
+      setFecha_ingreso('');
+      setEstado_proceso('SENTENCIA');
+      setObservacion('');
+      setTipoProceso('ASISTENCIA_FAMILIAR');
+      setFojas(0);
+      setCuerpos(0);
+    } catch (error) {
+      console.error('Error saving document: ', error);
+      alert('Error al guardar el proceso');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded shadow-md text-gray-800">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-bold text-gray-700 ">N° NUREJ</label>
+          <input
+            type="text"
+            value={nurej}
+            onChange={(e) => setNurej(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700">Tipo de Proceso</label>
+          <select
+            value={tipoProceso}
+            onChange={(e) => setTipoProceso(e.target.value as any)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+          >
+            {TIPOS_PROCESO.map((tipo) => (
+              <option key={tipo} value={tipo}>
+                {tipo.replace(/_/g, ' ')}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700">Demandantes</label>
+          <input
+            type="text"
+            value={demandantes}
+            onChange={(e) => setDemandantes(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700">Demandados</label>
+          <input
+            type="text"
+            value={demandados}
+            onChange={(e) => setDemandados(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700">Fecha de Ingreso</label>
+          <input
+            type="date"
+            value={fecha_ingreso}
+            onChange={(e) => setFecha_ingreso(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700">Estado del Proceso</label>
+          <select
+            value={estado_proceso}
+            onChange={(e) => setEstado_proceso(e.target.value as any)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+          >
+            {ESTADOS_PROCESO.map((estado) => (
+              <option key={estado} value={estado}>
+                {estado.replace(/_/g, ' ')}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700">Fojas</label>
+            <input
+              type="number"
+              value={fojas}
+              onChange={(e) => setFojas(Number(e.target.value))}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700">Cuerpos</label>
+            <input
+              type="number"
+              value={cuerpos}
+              onChange={(e) => setCuerpos(Number(e.target.value))}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+              min="0"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-gray-700">Observación</label>
+        <textarea
+          value={observacion}
+          onChange={(e) => setObservacion(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
+          rows={3}
+        />
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-bold text-white bg-red-500 hover:bg-red-600 focus:outline-none"
+          disabled={loading}
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:bg-blue-400"
+          disabled={loading}
+        >
+          {loading ? 'Guardando...' : (isEdit ? 'Actualizar' : 'Guardar')}
+        </button>
+      </div>
+    </form>
+  );
+}
