@@ -70,77 +70,93 @@ const processColors = {
 export default function DashboardStats() {
   const [stats, setStats] = useState<ProcessStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allData, setAllData] = useState<any[]>([]);
+  const [years, setYears] = useState<string[]>([]);
+  const [selectedYear, setSelectedYear] = useState<string>("");
+
+  const processesDefinition = [
+    {
+      name: "Proceso Ordinario",
+      collection: "ordinario",
+      icon: FileText,
+      color: "pink",
+    },
+    {
+      name: "Proceso Extraordinario",
+      collection: "extraordinario",
+      icon: BookUser,
+      color: "blue",
+    },
+    {
+      name: "Proceso Inmediata",
+      collection: "inmediata",
+      icon: Clock,
+      color: "green",
+    },
+    {
+      name: "Proceso Incidente",
+      collection: "incidente",
+      icon: AlertTriangle,
+      color: "red",
+    },
+    {
+      name: "Proceso Preliminar",
+      collection: "preliminar",
+      icon: FileCog,
+      color: "yellow",
+    },
+    {
+      name: "Proceso Preparatoria",
+      collection: "preparatoria",
+      icon: FilePen,
+      color: "blue",
+    },
+  ];
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const processes = [
-        {
-          name: "Proceso Ordinario",
-          collection: "ordinario",
-          icon: FileText,
-          color: "pink",
-        },
-        {
-          name: "Proceso Extraordinario",
-          collection: "extraordinario",
-          icon: BookUser,
-          color: "blue",
-        },
-        {
-          name: "Proceso Inmediata",
-          collection: "inmediata",
-          icon: Clock,
-          color: "green",
-        },
-        {
-          name: "Proceso Incidente",
-          collection: "incidente",
-          icon: AlertTriangle,
-          color: "red",
-        },
-        {
-          name: "Proceso Preliminar",
-          collection: "preliminar",
-          icon: FileCog,
-          color: "yellow",
-        },
-        {
-          name: "Proceso Preparatoria",
-          collection: "preparatoria",
-          icon: FilePen,
-          color: "blue",
-        },
-      ];
-
+    const fetchData = async () => {
       try {
         const results = await Promise.all(
-          processes.map(async (proc) => {
+          processesDefinition.map(async (proc) => {
             const querySnapshot = await getDocs(
               collection(db, proc.collection),
             );
-            const states: StatsData = {};
-            const types: StatsData = {};
-
-            querySnapshot.forEach((doc) => {
+            return querySnapshot.docs.map((doc) => {
               const data = doc.data();
+              let year = "";
+              if (data.fecha_ingreso) {
+                if (data.fecha_ingreso.toDate) {
+                  year = data.fecha_ingreso.toDate().getFullYear().toString();
+                } else if (data.fecha_ingreso instanceof Date) {
+                  year = data.fecha_ingreso.getFullYear().toString();
+                } else {
+                  // Try to parse string or timestamp number
+                  try {
+                    const d = new Date(data.fecha_ingreso);
+                    if (!isNaN(d.getTime())) {
+                      year = d.getFullYear().toString();
+                    }
+                  } catch (e) {}
+                }
+              }
 
-              // Count States
-              const state = data.estado_proceso || "Desconocido";
-              states[state] = (states[state] || 0) + 1;
-
-              // Count Types
-              const type = data.proceso || "Desconocido";
-              types[type] = (types[type] || 0) + 1;
+              return {
+                collection: proc.collection,
+                estado_proceso: data.estado_proceso || "Desconocido",
+                proceso: data.proceso || "Desconocido",
+                year,
+              };
             });
-
-            return {
-              ...proc,
-              states,
-              types,
-            };
           }),
         );
-        setStats(results);
+
+        const flatData = results.flat();
+        setAllData(flatData);
+
+        const uniqueYears = Array.from(
+          new Set(flatData.map((d) => d.year).filter((y) => y)),
+        ).sort((a, b) => b.localeCompare(a));
+        setYears(uniqueYears);
       } catch (error) {
         console.error("Error fetching stats:", error);
       } finally {
@@ -148,15 +164,69 @@ export default function DashboardStats() {
       }
     };
 
-    fetchStats();
+    fetchData();
   }, []);
 
+  useEffect(() => {
+    if (loading) return;
+
+    const filteredData = selectedYear
+      ? allData.filter((d) => d.year === selectedYear)
+      : allData;
+
+    const newStats = processesDefinition.map((proc) => {
+      const procData = filteredData.filter(
+        (d) => d.collection === proc.collection,
+      );
+
+      const states: StatsData = {};
+      const types: StatsData = {};
+
+      procData.forEach((d) => {
+        states[d.estado_proceso] = (states[d.estado_proceso] || 0) + 1;
+        types[d.proceso] = (types[d.proceso] || 0) + 1;
+      });
+
+      return {
+        ...proc,
+        states,
+        types,
+      };
+    });
+
+    setStats(newStats);
+  }, [allData, selectedYear, loading]);
+
   if (loading) {
-    return <div className="text-center py-8">Cargando estadísticas...</div>;
+    return (
+      <div className="text-center py-8 text-gray-800">
+        Cargando estadísticas...
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8">
+      {/* Year Filter */}
+      <div className="bg-white p-4 rounded-xl shadow border border-gray-100 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-800">Filtro Global</h2>
+        <div className="flex items-center gap-3">
+          <span className="text-gray-600 font-medium">Año:</span>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="p-2 border border-gray-300 rounded-md text-gray-700 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+          >
+            <option value="">Todos los años</option>
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Family Processes Stats */}
       <div>
         <h3 className="text-2xl font-bold text-gray-800 mb-4">

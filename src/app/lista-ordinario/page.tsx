@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {ProcesoOrdinario } from "@/src/app/types";
+import { ProcesoOrdinario } from "@/src/app/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaPrint, FaPlus, FaFileCsv, FaSearch } from "react-icons/fa";
@@ -11,12 +11,14 @@ import { FaEdit, FaTrashAlt } from "react-icons/fa";
 
 export default function ListaOrdinariosPage() {
   const [procesos, setProcesos] = useState<ProcesoOrdinario[]>([]);
-  const [filteredProcesos, setFilteredProcesos] = useState<
-    ProcesoOrdinario[]
-  >([]);
+  const [filteredProcesos, setFilteredProcesos] = useState<ProcesoOrdinario[]>(
+    [],
+  );
+  const [selectedYear, setSelectedYear] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-
+  const [selectedEstado, setSelectedEstado] = useState<string>("");
+  const [selectedTipo, setSelectedTipo] = useState<string>("");
   const router = useRouter();
 
   useEffect(() => {
@@ -25,14 +27,44 @@ export default function ListaOrdinariosPage() {
 
   useEffect(() => {
     const term = searchTerm.toLowerCase();
-    const filtered = procesos.filter(
-      (p) =>
+    const filtered = procesos.filter((p) => {
+      const year =
+        p.fecha_ingreso instanceof Date
+          ? p.fecha_ingreso.getFullYear().toString()
+          : "";
+      const matchYear = selectedYear ? year === selectedYear : true;
+      const matchEstado = selectedEstado
+        ? p.estado_proceso === selectedEstado
+        : true;
+      const matchTipo = selectedTipo ? p.proceso === selectedTipo : true;
+      const matchTerm =
         p.nurej.toLowerCase().includes(term) ||
         p.demandantes.toLowerCase().includes(term) ||
-        p.demandados.toLowerCase().includes(term)
-    );
+        p.demandados.toLowerCase().includes(term);
+      return matchYear && matchEstado && matchTipo && matchTerm;
+    });
     setFilteredProcesos(filtered);
-  }, [searchTerm, procesos]);
+  }, [searchTerm, procesos, selectedYear, selectedEstado, selectedTipo]);
+
+  const years = Array.from(
+    new Set(
+      procesos
+        .map((p) =>
+          p.fecha_ingreso instanceof Date
+            ? p.fecha_ingreso.getFullYear().toString()
+            : "",
+        )
+        .filter((y) => y),
+    ),
+  ).sort((a, b) => b.localeCompare(a));
+
+  const estados = Array.from(
+    new Set(procesos.map((p) => p.estado_proceso).filter((e) => e)),
+  ).sort();
+
+  const tipos = Array.from(
+    new Set(procesos.map((p) => p.proceso).filter((t) => t)),
+  ).sort();
 
   const fetchProcesos = async () => {
     try {
@@ -45,8 +77,8 @@ export default function ListaOrdinariosPage() {
           fecha_ingreso: data.fecha_ingreso?.toDate
             ? data.fecha_ingreso.toDate()
             : data.fecha_ingreso
-            ? new Date(data.fecha_ingreso)
-            : null,
+              ? new Date(data.fecha_ingreso)
+              : null,
         };
       }) as ProcesoOrdinario[];
       setProcesos(procesosData);
@@ -151,41 +183,83 @@ export default function ListaOrdinariosPage() {
         Lista de Procesos Ordinarios
       </h1>
 
-      <div className="flex flex-col md:flex-row justify-between mb-4 px-4 gap-4 no-print">
-        <div className="flex-1 flex gap-2">
-          <div className="relative flex-1">
+      <div className="flex flex-col gap-4 mb-6 px-4 no-print">
+        {/* Top Row: Search and Actions */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="relative w-full md:flex-1">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Buscar por NUREJ, Demandantes o Demandados..."
-              className="flex-1 p-2 pl-10 border border-gray-300 rounded text-black w-full"
+              className="w-full p-2 pl-10 border border-gray-300 rounded text-black focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-        </div>
-        <div className="flex gap-2">
-          <button
+          <div className="flex gap-2 w-full md:w-auto justify-end">
+            {/* <button
             onClick={handleExport}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
           >
-            <FaFileCsv />
             Exportar CSV
-          </button>
-          <button
-            onClick={handlePrint}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+          </button> */}
+            <button
+              onClick={handlePrint}
+              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+            >
+              <FaPrint />
+              Imprimir
+            </button>
+            <Link
+              href="/ordinario"
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+            >
+              <FaPlus />
+              Nuevo Proceso
+            </Link>
+          </div>
+        </div>
+
+        {/* Filters Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded text-black focus:ring-2 focus:ring-blue-500"
           >
-            <FaPrint />
-            Imprimir
-          </button>
-          <Link
-            href="/ordinario"
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+            <option value="">Todos los años</option>
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedEstado}
+            onChange={(e) => setSelectedEstado(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded text-black focus:ring-2 focus:ring-blue-500"
           >
-            <FaPlus />
-            Nuevo Proceso
-          </Link>
+            <option value="">Todos los Estados</option>
+            {estados.map((estado) => (
+              <option key={estado} value={estado}>
+                {estado?.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedTipo}
+            onChange={(e) => setSelectedTipo(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded text-black focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todos los Tipos</option>
+            {tipos.map((tipo) => (
+              <option key={tipo} value={tipo}>
+                {tipo?.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -251,30 +325,32 @@ export default function ListaOrdinariosPage() {
                   proceso.estado_proceso === "SENTENCIA"
                     ? "bg-green-100 text-green-800"
                     : proceso.estado_proceso === "CONCILIACION"
-                    ? "bg-green-100 text-green-800"
-                    : proceso.estado_proceso === "DESISTIMIENTO"
-                    ? "bg-red-100 text-red-800"
-                    : proceso.estado_proceso === "RETIRO DE LA DEMANDA"
-                    ? "bg-red-100 text-red-800"
-                    : proceso.estado_proceso === "EXTINCION POR INACTIVIDAD"
-                    ? "bg-red-100 text-red-800"
-                    : proceso.estado_proceso === "RECHAZADAS"
-                    ? "bg-red-100 text-red-800"
-                    : proceso.estado_proceso === "POR NO PRESENTADADAS"
-                    ? "bg-orange-100 text-orange-800"
-                    : proceso.estado_proceso === "EXCUSA"
-                    ? "bg-purple-100 text-purple-800"
-                    : proceso.estado_proceso === "REFUSA"
-                    ? "bg-purple-100 text-purple-800"
-                    : proceso.estado_proceso === "DECLINACION"
-                    ? "bg-purple-100 text-purple-800"
-                    : proceso.estado_proceso === "OTROS"
-                    ? "bg-gray-100 text-gray-800"
-                    : "bg-gray-100 text-gray-800"
+                      ? "bg-green-100 text-green-800"
+                      : proceso.estado_proceso === "DESISTIMIENTO"
+                        ? "bg-red-100 text-red-800"
+                        : proceso.estado_proceso === "RETIRO DE LA DEMANDA"
+                          ? "bg-red-100 text-red-800"
+                          : proceso.estado_proceso ===
+                              "EXTINCION POR INACTIVIDAD"
+                            ? "bg-red-100 text-red-800"
+                            : proceso.estado_proceso === "RECHAZADAS"
+                              ? "bg-red-100 text-red-800"
+                              : proceso.estado_proceso ===
+                                  "POR NO PRESENTADADAS"
+                                ? "bg-orange-100 text-orange-800"
+                                : proceso.estado_proceso === "EXCUSA"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : proceso.estado_proceso === "REFUSA"
+                                    ? "bg-purple-100 text-purple-800"
+                                    : proceso.estado_proceso === "DECLINACION"
+                                      ? "bg-purple-100 text-purple-800"
+                                      : proceso.estado_proceso === "OTROS"
+                                        ? "bg-gray-100 text-gray-800"
+                                        : "bg-gray-100 text-gray-800"
                 }`}
-                            >
-                      {proceso.estado_proceso?.replace(/_/g, " ")}
-                    </span>
+                  >
+                    {proceso.estado_proceso?.replace(/_/g, " ")}
+                  </span>
                 </td>
                 <td className="px-6 py-4">{proceso.observacion}</td>
                 <td className="px-6 py-4">

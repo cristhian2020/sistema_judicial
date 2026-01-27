@@ -28,9 +28,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <DashboardStats />
-
+     
       {/* Main Action Cards */}
       <p className="text-4xl font-bold text-gray-900 mb-6 text-center mt-8">
         Procesos de Familia

@@ -16,6 +16,7 @@ import {
   TriangleAlert,
   FileCog,
   FilePen,
+  ChartColumn,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -68,6 +69,14 @@ export default function DashboardShell({
       icon: FilePen,
       path: "/lista-preparatoria",
       color: "text-blue-600",
+    },
+  ]
+  const menuButtons = [
+    {
+      name: "Estadísticas",
+      icon: ChartColumn,
+      path: "/stats",
+      color: "text-orange-700",
     },
   ]
 
@@ -184,6 +193,53 @@ export default function DashboardShell({
                   );
                 })
               }
+            </ul>
+            
+            <ul>
+              <li className="border-t border-gray-200 my-2"></li>
+              <li>
+                <div className={`flex items-center ${isSidebarOpen ? "justify-start px-4" : "justify-center"} py-3`}>
+                  <ChartColumn
+                    className={`h-5 w-5 ${isSidebarOpen ? "mr-3" : ""} text-gray-600`}
+                  />
+                  {isSidebarOpen && (
+                    <span className="text-gray-700 font-bold">
+                      Estadísticas
+                    </span>
+                  )}
+                </div>
+              </li>
+              {
+                menuButtons.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.path;
+
+                  return (
+                    <li key={item.name}>
+                      <button
+                        onClick={() => router.push(item.path)}
+                        className={`w-full flex items-center ${
+                          isSidebarOpen ? "justify-start px-4" : "justify-center"
+                        } py-3 rounded-lg transition-colors ${
+                          isActive
+                            ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+                            : "hover:bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        <Icon
+                          className={`h-5 w-5 ${isSidebarOpen ? "mr-3" : ""} ${
+                            item.color
+                          }`}
+                        />
+                        {isSidebarOpen && (
+                          <span className="font-medium">{item.name}</span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })
+              }
+
             </ul>
           </nav>
         </aside>
