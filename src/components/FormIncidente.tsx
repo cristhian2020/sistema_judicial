@@ -20,6 +20,7 @@ const ESTADOS_PROCESO = [
   'EXTINCION POR INACTIVIDAD',
   'RECHAZADAS',
   'POR NO PRESENTADADAS',
+  'PENDIENTE',
 ];
 
 const TIPOS_PROCESO = [
@@ -38,6 +39,7 @@ export default function FormIncidente({
   const [nurej, setNurej] = useState(proceso?.nurej || '');
   const [demandados, setDemandados] = useState(proceso?.demandados || '');
   const [demandantes, setDemandantes] = useState(proceso?.demandantes || '');
+  const [ci, setCi] = useState(proceso?.ci || '');
   const [fecha_ingreso, setFecha_ingreso] = useState(
     proceso?.fecha_ingreso
       ? new Date(proceso.fecha_ingreso).toISOString().split('T')[0]
@@ -63,6 +65,7 @@ export default function FormIncidente({
         nurej,
         demandados,
         demandantes,
+        ci,
         fecha_ingreso: fecha_ingreso ? new Date(fecha_ingreso) : new Date(),
         estado_proceso: estado_proceso as any,
         observacion,
@@ -81,6 +84,7 @@ export default function FormIncidente({
       setNurej('');
       setDemandados('');
       setDemandantes('');
+      setCi('');
       setFecha_ingreso('');
       setEstado_proceso('SENTENCIA');
       setObservacion('');
@@ -132,6 +136,17 @@ export default function FormIncidente({
             onChange={(e) => setDemandantes(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
             required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700">C/I</label>
+          <input
+            type="text"
+            value={ci}
+            onChange={(e) => setCi(e.target.value)}
+            placeholder="Ej: 01/2025"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black"
           />
         </div>
 

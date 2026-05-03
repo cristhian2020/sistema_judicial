@@ -10,7 +10,9 @@ export type EstadoProceso =
   | 'EXCUSA'
   | 'REFUSA'
   | 'DECLINACION'
+  | 'PENDIENTE'
   | 'OTROS'
+
 
   export type EstadoProcesoPreliminar = 
   | 'CONCILIACION'
@@ -21,6 +23,7 @@ export type EstadoProceso =
   | 'DECLINACION E INHIBITORIA'
   | 'EXCUSA'
   | 'RECUSA'
+  | 'PENDIENTE'
 
   export type EstadoProcesoPreparatoria = 
     | 'PROCEDIMIENTO ABREVIADO'
@@ -33,6 +36,7 @@ export type EstadoProceso =
     | 'DECLINATORIA E INHIBITORIA'
     | 'EXCUSA'
     | 'RECUSA'
+    | 'PENDIENTE'
     
 
 export type TipoProcesoExtraordinario = 
@@ -87,6 +91,7 @@ export interface ProcesoExtraordinarioBase {
   observacion: string;
   fojas: number;
   cuerpos: number;
+  ci?: string;
 }
 
 export interface ProcesoInmediataBase {
@@ -99,6 +104,7 @@ export interface ProcesoInmediataBase {
   observacion: string;
   fojas: number;
   cuerpos: number;
+  ci?: string;
 }
 
 export interface ProcesoOrdinarioBase {
@@ -111,6 +117,7 @@ export interface ProcesoOrdinarioBase {
   observacion: string;
   fojas: number;
   cuerpos: number;
+  ci?: string;
 }
 
 export interface ProcesoIncidenteBase {
@@ -123,6 +130,7 @@ export interface ProcesoIncidenteBase {
   observacion: string;
   fojas: number;
   cuerpos: number;
+  ci?: string;
 }
 export interface ProcesoPenalBase {
   id?: string;
@@ -135,6 +143,7 @@ export interface ProcesoPenalBase {
   fojas: number;
   cuerpos: number;
   check_box: boolean;
+  ci?: string;
 }
 
 export interface ProcesoExtraordinario extends ProcesoExtraordinarioBase {

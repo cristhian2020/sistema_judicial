@@ -113,7 +113,7 @@ export default function ListaPreliminarPage() {
 
   const handleExport = () => {
     const headers = [
-      "NUREJ,Tipo,Demandantes,Demandados,Estado,Fecha Ingreso,Cuerpos,Fojas,Acusacion,Observaciones",
+      "NUREJ,Tipo,Demandantes,Demandados,C/I,Estado,Fecha Ingreso,Cuerpos,Fojas,Acusacion,Observaciones",
     ];
     const rows = filteredProcesos.map((p) => {
       const fecha =
@@ -125,6 +125,7 @@ export default function ListaPreliminarPage() {
         `"${p.proceso}"`,
         `"${p.demandantes}"`,
         `"${p.demandados}"`,
+        `"${p.ci || ""}"`,
         `"${p.estado_proceso}"`,
         `"${fecha}"`,
         p.cuerpos,
@@ -272,6 +273,9 @@ export default function ListaPreliminarPage() {
                 NUREJ
               </th>
               <th scope="col" className="px-6 py-3">
+                C/I
+              </th>
+              <th scope="col" className="px-6 py-3">
                 Demandantes
               </th>
               <th scope="col" className="px-6 py-3">
@@ -310,6 +314,7 @@ export default function ListaPreliminarPage() {
                 className="bg-white border-b hover:bg-gray-50 text-gray-900"
               >
                 <td className="px-6 py-4 font-medium">{proceso.nurej}</td>
+                <td className="px-6 py-4">{proceso.ci}</td>
                 <td className="px-6 py-4">{proceso.demandantes}</td>
                 <td className="px-6 py-4">{proceso.demandados}</td>
                 <td className="px-6 py-4">
