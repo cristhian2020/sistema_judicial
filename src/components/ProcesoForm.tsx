@@ -52,11 +52,16 @@ export default function ProcesoForm({
   const [demandados, setDemandados] = useState(proceso?.demandados || '');
   const [demandantes, setDemandantes] = useState(proceso?.demandantes || '');
   const [ci, setCi] = useState(proceso?.ci || '');
-  const [fecha_ingreso, setFecha_ingreso] = useState(
-    proceso?.fecha_ingreso
-      ? new Date(proceso.fecha_ingreso).toISOString().split('T')[0]
-      : ''
-  );
+  const [fecha_ingreso, setFecha_ingreso] = useState(() => {
+    if (proceso?.fecha_ingreso) {
+      const d = new Date(proceso.fecha_ingreso);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return '';
+  });
   const [estado_proceso, setEstado_proceso] = useState(
     proceso?.estado_proceso || 'SENTENCIA'
   );
@@ -78,7 +83,13 @@ export default function ProcesoForm({
         demandados,
         demandantes,
         ci,
-        fecha_ingreso: fecha_ingreso ? new Date(fecha_ingreso) : new Date(),
+        fecha_ingreso: (() => {
+          if (fecha_ingreso) {
+            const [y, m, d] = fecha_ingreso.split('-').map(Number);
+            return new Date(y, m - 1, d, 12, 0, 0);
+          }
+          return new Date();
+        })(),
         estado_proceso: estado_proceso as any,
         observacion,
         proceso: tipoProceso as any,
