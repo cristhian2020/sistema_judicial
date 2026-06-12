@@ -70,7 +70,7 @@ export default function ProcesoForm({
     proceso?.proceso || 'ASISTENCIA_FAMILIAR'
   );
   const [fojas, setFojas] = useState(proceso?.fojas || 0);
-  const [cuerpos, setCuerpos] = useState(proceso?.cuerpos || 0);
+  const [cuerpos, setCuerpos] = useState(proceso?.cuerpos || 1);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -113,7 +113,7 @@ export default function ProcesoForm({
       setObservacion('');
       setTipoProceso('ASISTENCIA_FAMILIAR');
       setFojas(0);
-      setCuerpos(0);
+      setCuerpos(1);
     } catch (error) {
       console.error('Error saving document: ', error);
       alert('Error al guardar el proceso');

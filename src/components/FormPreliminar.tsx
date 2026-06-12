@@ -60,7 +60,7 @@ export default function FormPreliminar({
     proceso?.proceso || 'PENAL COMUN'
   );
   const [fojas, setFojas] = useState(proceso?.fojas || 0);
-  const [cuerpos, setCuerpos] = useState(proceso?.cuerpos || 0);
+  const [cuerpos, setCuerpos] = useState(proceso?.cuerpos || 1);
   const [check_box, setCheckBox] = useState<boolean>(proceso?.check_box || false);
 
   const [loading, setLoading] = useState(false);
@@ -104,7 +104,7 @@ export default function FormPreliminar({
       setObservacion('');
       setTipoProceso('PENAL COMUN');
       setFojas(0);
-      setCuerpos(0);
+      setCuerpos(1);
       setCheckBox(false);
       onSubmit(procesoData);
     }catch (error){

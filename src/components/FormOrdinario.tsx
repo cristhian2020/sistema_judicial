@@ -68,7 +68,7 @@ export default function FormOrdinario({
     proceso?.proceso || 'NULIDAD DE MATRIMONIO O DE UNION LIBRE'
   );
   const [fojas, setFojas] = useState(proceso?.fojas || 0);
-  const [cuerpos, setCuerpos] = useState(proceso?.cuerpos || 0);
+  const [cuerpos, setCuerpos] = useState(proceso?.cuerpos || 1);
   const [loading, setLoading] = useState(false);
     
 
@@ -109,7 +109,7 @@ export default function FormOrdinario({
       setObservacion('');
       setTipoProceso('NULIDAD DE MATRIMONIO O DE UNION LIBRE');
       setFojas(0);
-      setCuerpos(0);
+      setCuerpos(1);
       onSubmit(procesoData);
     }catch (error){
       console.error('Error saving document: ', error);
